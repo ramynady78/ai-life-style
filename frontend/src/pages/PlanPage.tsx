@@ -1,0 +1,225 @@
+import { useEffect, useState } from "react";
+import { Activity, Play, RefreshCw } from "lucide-react";
+import { SidebarLayout } from "@/components/SidebarLayout";
+import { api, ApiError, type ActiveRecommendation } from "@/lib/api";
+import { parseRoutine, parseWorkoutPlan } from "@/lib/health";
+import { toast } from "@/hooks/use-toast";
+
+export default function PlanPage() {
+  const [activeTab, setActiveTab] = useState<"workout" | "routine">("workout");
+  const [plan, setPlan] = useState<ActiveRecommendation | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadPlan = async () => {
+    setError("");
+    try {
+      const response = await api.getActiveRecommendation();
+      setPlan(response);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        setPlan(null);
+      } else {
+        setError(err instanceof Error ? err.message : "Unable to load plan");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPlan();
+  }, []);
+
+  const handleRegenerate = async () => {
+    setIsRefreshing(true);
+    setError("");
+
+    try {
+      const response = await api.generateRecommendationPlan();
+      await loadPlan();
+      toast({
+        title: `Plan regenerated (v${response.version})`,
+        description: "Your workout and daily routine are updated.",
+      });
+    } catch (err: any) {
+      setError(err.message ?? "Unable to regenerate plan");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <SidebarLayout className="p-4 sm:p-8">
+        <div className="rounded-2xl border border-border bg-card p-8 text-muted-foreground">
+          Loading your plan...
+        </div>
+      </SidebarLayout>
+    );
+  }
+
+  const workout = parseWorkoutPlan(plan?.content.workout_plan);
+  const routine = parseRoutine(plan?.content.daily_routine);
+
+  return (
+    <SidebarLayout className="p-4 sm:p-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl md:text-3xl font-bold text-primary tracking-tight">
+              Your Recommendations
+            </h1>
+            {plan && (
+              <span className="px-2.5 py-1 bg-muted text-muted-foreground text-xs font-semibold rounded-full border border-border">
+                Plan Version: v{plan.version}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Generated from your live profile and backend recommendation engine
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex bg-muted p-1 rounded-xl border border-border self-start">
+            <button
+              onClick={() => setActiveTab("workout")}
+              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                activeTab === "workout"
+                  ? "bg-white text-primary shadow-sm border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Workout Plan
+            </button>
+            <button
+              onClick={() => setActiveTab("routine")}
+              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                activeTab === "routine"
+                  ? "bg-white text-primary shadow-sm border border-border"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Daily Routine
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            disabled={isRefreshing}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted disabled:opacity-60"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            {isRefreshing ? "Refreshing..." : "Regenerate"}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {!plan ? (
+        <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+          <h2 className="text-xl font-bold text-foreground mb-2">No active plan found</h2>
+          <p className="text-muted-foreground mb-6">
+            Create or update your profile first, then generate a plan.
+          </p>
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            disabled={isRefreshing}
+            className="rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            Generate Plan
+          </button>
+        </div>
+      ) : activeTab === "workout" ? (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {workout.summary.map((line) => (
+              <div key={line} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <p className="text-sm font-semibold text-muted-foreground mb-2">
+                  {line.split(":")[0]}
+                </p>
+                <p className="text-lg font-bold text-foreground">
+                  {line.split(":").slice(1).join(":").trim()}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {workout.days.map((day) => (
+              <div
+                key={day.title}
+                className="bg-card rounded-2xl border border-border shadow-sm flex flex-col overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <div className="bg-gradient-to-br from-[#08142F] to-[#1a2855] p-5 text-white">
+                  <span className="inline-block px-2.5 py-0.5 bg-white/20 text-white text-xs font-semibold rounded-full mb-3">
+                    Session
+                  </span>
+                  <h3 className="text-xl font-bold mb-1">{day.title}</h3>
+                  <p className="text-sm text-white/70">Generated training focus</p>
+                </div>
+
+                <div className="p-5 flex-1 flex flex-col gap-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                      <h4 className="text-xs font-bold text-emerald-600 tracking-wider uppercase">
+                        Session Details
+                      </h4>
+                    </div>
+                    <div className="space-y-4">
+                      {day.details.map((detail) => (
+                        <div key={detail} className="flex gap-4 items-center">
+                          <div className="rounded-lg bg-gray-800 flex items-center justify-center w-16 h-16 min-w-16 shadow-inner cursor-pointer hover:bg-gray-700 transition-colors group">
+                            <Play className="w-6 h-6 text-white fill-white opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                          </div>
+                          <div className="flex-1">
+                            <h5 className="text-sm font-bold text-foreground leading-tight">
+                              {detail}
+                            </h5>
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/5 text-primary border border-primary/10">
+                                Recommended
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-border bg-gray-50/50">
+                  <button className="w-full py-2.5 rounded-xl border border-border bg-white text-sm font-semibold text-primary shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-[0.98]">
+                    Start Session
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
+          {routine.map((item) => (
+            <div key={item.label} className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Activity className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">{item.label}</h3>
+              <p className="text-muted-foreground">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </SidebarLayout>
+  );
+}

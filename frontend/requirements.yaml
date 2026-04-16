@@ -1,0 +1,12 @@
+packages:
+  "react-router-dom": "For application routing as explicitly required"
+  "recharts": "For dashboard charts and data visualization"
+  "lucide-react": "For UI icons across the application"
+  "@fontsource/inter": "Primary typography for the application"
+
+images: []
+
+notes:
+  - Application uses purely static mock data as per requirements
+  - Routing utilizes react-router-dom instead of wouter
+  - Complete frontend implementation with 7 distinct pages
