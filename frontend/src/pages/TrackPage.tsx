@@ -32,11 +32,13 @@ export default function TrackPage() {
         if (latestMeasurement) {
           setWeightKg(String(latestMeasurement.weight_kg ?? ""));
           setStepsAvg(String(latestMeasurement.steps_avg ?? ""));
-          }
+          setHeartRate(String(latestMeasurement.heart_rate ?? ""));
+        }
 
         if (latestAdherence) {
           setCompletionPct(latestAdherence.completion_pct ?? 0);
           setCompletedAll(latestAdherence.workout_done);
+          setNotes(latestAdherence.comment ?? "");
         }
       } catch (err: any) {
         if (isMounted) {
@@ -52,30 +54,37 @@ export default function TrackPage() {
     };
   }, []);
 
-const handleSave = async () => {
-  setIsSaving(true);
-  setError("");
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError("");
 
-  try {
-    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
 
-    const adherenceResponse = await api.createAdherenceLog({
-      logDate: today,
-      workoutDone: completedAll,
-      completionPct,
-      comment: notes || null,
-    });
+      await api.createAdherenceLog({
+        logDate: today,
+        workoutDone: completedAll,
+        completionPct,
+        comment: notes || null,
+      });
 
-    toast({
-      title: "Progress saved",
-      description: "Your adherence log has been saved successfully.",
-    });
-  } catch (err: any) {
-    setError(err.message ?? "Unable to save progress");
-  } finally {
-    setIsSaving(false);
-  }
-};
+      const measurementResponse = await api.createMeasurement({
+        measuredAt: today,
+        weightKg: weightKg ? Number(weightKg) : null,
+        stepsAvg: stepsAvg ? Number(stepsAvg) : null,
+        heartRate: heartRate ? Number(heartRate) : null,
+      });
+
+      toast({
+        title: "Progress saved",
+        description: measurementResponse.adjustment.reason,
+      });
+    } catch (err: any) {
+      setError(err.message ?? "Unable to save progress");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <SidebarLayout className="p-4 sm:p-8">
@@ -123,7 +132,17 @@ const handleSave = async () => {
                 className="w-full px-4 py-2.5 bg-background border-2 border-border rounded-xl focus:border-ring focus:ring-4 focus:ring-accent/10 transition-all font-medium text-primary tracking-tight"
               />
             </div>
-            
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-primary tracking-tight">
+                Resting Heart Rate
+              </label>
+              <input
+                type="number"
+                value={heartRate}
+                onChange={(e) => setHeartRate(e.target.value)}
+                className="w-full px-4 py-2.5 bg-background border-2 border-border rounded-xl focus:border-ring focus:ring-4 focus:ring-accent/10 transition-all font-medium text-primary tracking-tight"
+              />
+            </div>
           </div>
         </div>
 
@@ -154,7 +173,7 @@ const handleSave = async () => {
                   setCompletionPct(checked ? 100 : 0);
                 }}
               />
-              <div className="w-14 h-7 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-accent"></div>
+              <div className="w-14 h-7 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-accent" />
             </label>
           </div>
 
@@ -163,9 +182,7 @@ const handleSave = async () => {
               <label className="text-sm font-semibold text-primary tracking-tight">
                 Completion Percentage
               </label>
-              <span className="text-lg font-bold text-primary tracking-tight">
-                {completionPct}%
-              </span>
+              <span className="text-lg font-bold text-primary tracking-tight">{completionPct}%</span>
             </div>
             <input
               type="range"
@@ -191,8 +208,8 @@ const handleSave = async () => {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="w-full px-4 py-3 bg-background border-2 border-border rounded-xl focus:border-ring focus:ring-4 focus:ring-accent/10 transition-all min-h-[120px] resize-y placeholder:text-muted-foreground/70"
-            placeholder="Notes stay on this device for now. Backend support exists for measurements and adherence."
-          ></textarea>
+            placeholder="Your notes are now saved with your adherence log."
+          />
         </div>
 
         <div className="flex justify-end pt-4">

@@ -1,0 +1,6 @@
+node_modules
+.env
+.local
+attached_assets
+.DS_Store
+dist

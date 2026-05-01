@@ -12,22 +12,22 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { SidebarLayout } from "@/components/SidebarLayout";
-import { api, ApiError, type ActiveRecommendation, type Profile } from "@/lib/api";
+import {
+  api,
+  ApiError,
+  type ActiveRecommendation,
+  type Profile,
+  type RecommendationCard,
+} from "@/lib/api";
 import { goalLabel, parseRoutine, parseWorkoutPlan } from "@/lib/health";
 import { toast } from "@/hooks/use-toast";
 
-type RecommendationCard = {
-  id: string;
-  category: "Nutrition" | "Workout" | "Recovery" | "Lifestyle";
-  priority: "High" | "Medium" | "Low";
-  title: string;
-  description: string;
-  action: string;
-  icon: string;
-};
-
 function buildCards(plan: ActiveRecommendation | null, profile: Profile | null): RecommendationCard[] {
   if (!plan) return [];
+
+  if (plan.content.recommendation_cards && plan.content.recommendation_cards.length > 0) {
+    return plan.content.recommendation_cards;
+  }
 
   const workout = parseWorkoutPlan(plan.content.workout_plan);
   const routine = parseRoutine(plan.content.daily_routine);
@@ -228,7 +228,7 @@ export default function RecommendationsPage() {
             )}
           </div>
           <p className="text-muted-foreground font-medium">
-            Personalized from your live backend profile and tracking data
+            Personalized by local Ollama AI from your profile and tracking data
           </p>
         </div>
 

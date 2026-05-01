@@ -7,6 +7,7 @@ packages:
 images: []
 
 notes:
-  - Application uses purely static mock data as per requirements
+  - Application data is loaded from backend APIs
+  - AI recommendations, chat, tracking adjustments, and nutrition guidance use local Ollama through the backend
   - Routing utilizes react-router-dom instead of wouter
-  - Complete frontend implementation with 7 distinct pages
+  - No cloud AI provider is required when Ollama and gamma4:e2b are installed locally

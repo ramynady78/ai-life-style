@@ -142,6 +142,10 @@ export default function DashboardPage() {
     name: `W${index + 1}`,
     value: item.bmi,
   }));
+  const aiInsight =
+    plan?.content.progress_summary ||
+    plan?.content.adjustment_summary ||
+    (latestBmi ? `BMI is ${latestBmi}` : "Add measurements to unlock insights");
 
   return (
     <SidebarLayout className="p-4 sm:p-8">
@@ -244,7 +248,7 @@ export default function DashboardPage() {
               </div>
               <p className="text-sm font-semibold text-muted-foreground mb-1">Current Goal</p>
               <h3 className="text-2xl font-bold text-foreground mb-1">{goalLabel(profile?.goal_type)}</h3>
-              <p className="text-xs font-medium text-emerald-600">Profile-driven plan target</p>
+              <p className="text-xs font-medium text-emerald-600">Local AI plan target</p>
             </div>
 
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
@@ -273,10 +277,10 @@ export default function DashboardPage() {
               </div>
               <p className="text-sm font-semibold text-muted-foreground mb-1">AI Insight</p>
               <h3 className="text-[15px] leading-tight font-bold text-foreground pr-12 mb-2 mt-1">
-                {latestBmi ? `BMI is ${latestBmi}` : "Add measurements to unlock insights"}
+                {aiInsight}
               </h3>
               <p className="text-xs font-medium text-muted-foreground">
-                Latest recommendation syncs with live profile and tracking.
+                Generated from the active local Ollama AI plan.
               </p>
             </div>
           </div>

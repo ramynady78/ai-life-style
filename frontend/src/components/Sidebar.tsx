@@ -14,30 +14,17 @@ import {
   Moon,
   Sun
 } from "lucide-react";
-import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "next-themes";
 
 export function Sidebar({ onCloseMobile }: { onCloseMobile?: () => void }) {
   const navigate = useNavigate();
-  const [isDark, setIsDark] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
   const { user, logout } = useAuth();
-
-  useEffect(() => {
-    if (document.documentElement.classList.contains('dark')) {
-      setIsDark(true);
-    }
-  }, []);
+  const isDark = resolvedTheme === "dark";
 
   const toggleDark = () => {
-    if (isDark) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setIsDark(false);
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-      setIsDark(true);
-    }
+    setTheme(isDark ? "light" : "dark");
   };
 
   const navSections = [

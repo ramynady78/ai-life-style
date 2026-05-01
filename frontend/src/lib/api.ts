@@ -1,4 +1,7 @@
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000").replace(
+  /\/$/,
+  "",
+);
 const TOKEN_KEY = "auth_token";
 
 export type User = {
@@ -7,7 +10,7 @@ export type User = {
   last_name: string;
   username: string;
   email: string;
-  created_at: string;
+  created_at?: string;
 };
 
 export type Profile = {
@@ -29,6 +32,28 @@ export type RecommendationPlan = {
   workout_plan: string;
   daily_routine: string;
   calorie_target: number;
+  macro_targets?: {
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  hydration_goal_liters?: number;
+  meals?: NutritionMeal[];
+  insights?: string[];
+  progress_summary?: string;
+  adjustment_summary?: string;
+  recommendation_cards?: RecommendationCard[];
+  safety_notes?: string[];
+};
+
+export type RecommendationCard = {
+  id: string;
+  category: "Nutrition" | "Workout" | "Recovery" | "Lifestyle";
+  priority: "High" | "Medium" | "Low";
+  title: string;
+  description: string;
+  action: string;
+  icon: string;
 };
 
 export type ActiveRecommendation = {
@@ -49,6 +74,7 @@ export type Measurement = {
   waist_cm: number | null;
   sleep_hours_avg: number | null;
   steps_avg: number | null;
+  heart_rate: number | null;
   created_at: string;
 };
 
@@ -58,6 +84,43 @@ export type AdherenceLog = {
   log_date: string;
   workout_done: boolean;
   completion_pct: number | null;
+  comment: string | null;
+  created_at: string;
+};
+
+export type NutritionMeal = {
+  id: string;
+  name: string;
+  type: "Breakfast" | "Lunch" | "Dinner" | "Snack";
+  time: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  tags: string[];
+};
+
+export type NutritionToday = {
+  date: string;
+  calorie_target: number;
+  consumed_calories: number;
+  macros: {
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  hydration: {
+    goal_liters: number;
+    current_liters: number;
+  };
+  meals: NutritionMeal[];
+  insights: string[];
+};
+
+export type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
   created_at: string;
 };
 
@@ -115,14 +178,13 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     : await response.text();
 
   if (!response.ok) {
-    const message =
-      data?.message ?? data?.error ?? `Request failed with status ${response.status}`;
+    const message = data?.message ?? data?.error ?? `Request failed with status ${response.status}`;
 
     if (response.status === 401 && !options.skipAuth) {
       clearToken();
       window.dispatchEvent(new Event("auth:logout"));
     }
-  
+
     throw new ApiError(response.status, message, data);
   }
 
@@ -150,8 +212,35 @@ export const api = {
       skipAuth: true,
     });
   },
+  logout() {
+    return request<{ message: string }>("/api/auth/logout", {
+      method: "POST",
+    });
+  },
   getCurrentUser() {
     return request<User>("/api/auth/me");
+  },
+  updateCurrentUser(payload: {
+    first_name?: string;
+    last_name?: string;
+    username?: string;
+    email?: string;
+  }) {
+    return request<{ message: string; user: User }>("/api/auth/me", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+  changePassword(payload: { currentPassword: string; newPassword: string }) {
+    return request<{ message: string }>("/api/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  deleteCurrentUser() {
+    return request<{ message: string }>("/api/auth/me", {
+      method: "DELETE",
+    });
   },
   getProfile() {
     return request<{ profile: Profile }>("/api/profile/me");
@@ -186,6 +275,7 @@ export const api = {
     waistCm?: number | null;
     sleepHoursAvg?: number | null;
     stepsAvg?: number | null;
+    heartRate?: number | null;
   }) {
     return request<{
       measurement: Measurement;
@@ -208,5 +298,26 @@ export const api = {
   },
   listAdherenceLogs() {
     return request<AdherenceLog[]>("/api/tracking/adherence");
+  },
+  getNutritionToday() {
+    return request<NutritionToday>("/api/nutrition/today");
+  },
+  getChatMessages() {
+    return request<ChatMessage[]>("/api/chat/messages");
+  },
+  sendChatMessage(payload: { content: string }) {
+    return request<{
+      userMessage: ChatMessage;
+      assistantMessage: ChatMessage;
+      messages: ChatMessage[];
+    }>("/api/chat/messages", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  clearChatMessages() {
+    return request<{ message: string; messages: ChatMessage[] }>("/api/chat/messages", {
+      method: "DELETE",
+    });
   },
 };

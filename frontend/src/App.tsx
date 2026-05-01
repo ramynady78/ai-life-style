@@ -23,11 +23,6 @@ import NotFound from "@/pages/not-found";
 const queryClient = new QueryClient();
 
 function App() {
-  // Check initial theme
-  if (localStorage.getItem('theme') === 'dark') {
-    document.documentElement.classList.add('dark');
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
