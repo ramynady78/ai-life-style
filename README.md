@@ -14,10 +14,10 @@ AI-assisted healthy lifestyle recommendation app with:
 2. Update `DATABASE_URL` and `JWT_SECRET` in `backend/.env`.
 3. Make sure Ollama is running locally and the model is installed:
    - `ollama list`
-   - `ollama pull gamma4:e2b` if the model is missing
+   - `ollama pull gemma4:e2b` if the model is missing
 4. Confirm the local AI settings:
    - `OLLAMA_BASE_URL=http://127.0.0.1:11434/api`
-   - `OLLAMA_MODEL=gamma4:e2b`
+   - `OLLAMA_MODEL=gemma4:e2b`
 5. Install deps:
    - `cd backend && npm install`
 

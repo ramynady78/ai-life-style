@@ -131,7 +131,7 @@ export default function ChatPage() {
               </div>
             </div>
             <span className="hidden sm:inline-block px-3 py-1 bg-muted text-muted-foreground text-xs font-bold rounded-full border border-border">
-              gamma4:e2b local
+              gemma4:e2b local
             </span>
           </div>
 

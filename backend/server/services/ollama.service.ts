@@ -43,11 +43,19 @@ type OllamaChatResponse = {
 };
 
 const DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434/api";
-const DEFAULT_OLLAMA_MODEL = "gamma4:e2b";
+const DEFAULT_OLLAMA_MODEL = "gemma4:e2b";
 const DEFAULT_TIMEOUT_MS = 120_000;
 
 export function getOllamaModel() {
-  return process.env.OLLAMA_MODEL?.trim() || DEFAULT_OLLAMA_MODEL;
+  const raw = process.env.OLLAMA_MODEL?.trim();
+  if (!raw) return DEFAULT_OLLAMA_MODEL;
+
+  // Common typo: "gamma4" vs "gemma4"
+  if (raw.toLowerCase().startsWith("gamma4:")) {
+    return `gemma4:${raw.split(":").slice(1).join(":")}`;
+  }
+
+  return raw;
 }
 
 export function normalizeOllamaBaseUrl(value = process.env.OLLAMA_BASE_URL) {

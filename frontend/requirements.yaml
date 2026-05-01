@@ -10,4 +10,4 @@ notes:
   - Application data is loaded from backend APIs
   - AI recommendations, chat, tracking adjustments, and nutrition guidance use local Ollama through the backend
   - Routing utilizes react-router-dom instead of wouter
-  - No cloud AI provider is required when Ollama and gamma4:e2b are installed locally
+  - No cloud AI provider is required when Ollama and gemma4:e2b are installed locally

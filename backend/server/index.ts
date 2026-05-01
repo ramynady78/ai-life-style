@@ -1,5 +1,9 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import path from "path";
 import { createServer } from "http";
+
+// Always load the backend-local .env, even if the process CWD differs.
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const { app } = require("./app");
 

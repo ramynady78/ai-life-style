@@ -30,6 +30,7 @@ export type Profile = {
 
 export type RecommendationPlan = {
   workout_plan: string;
+  training_days?: TrainingDay[];
   daily_routine: string;
   calorie_target: number;
   macro_targets?: {
@@ -42,8 +43,26 @@ export type RecommendationPlan = {
   insights?: string[];
   progress_summary?: string;
   adjustment_summary?: string;
+  adherence_level?: "low" | "medium" | "high";
+  personalization_factors?: string[];
+  next_week_focus?: string;
   recommendation_cards?: RecommendationCard[];
   safety_notes?: string[];
+};
+
+export type TrainingDayExercise = {
+  name: string;
+  sets: number;
+  reps: string;
+  rest_seconds: number;
+  notes: string;
+};
+
+export type TrainingDay = {
+  day: number;
+  focus: string;
+  duration_minutes: number;
+  exercises: TrainingDayExercise[];
 };
 
 export type RecommendationCard = {
